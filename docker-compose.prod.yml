@@ -1,0 +1,80 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: secure_bank
+      POSTGRES_USER: bank_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank_user -d secure_bank"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-https://localhost}
+      DATABASE_URL: postgresql://bank_user:${POSTGRES_PASSWORD:?set in .env}@db:5432/secure_bank
+      DB_ENCRYPTION_KEY: ${DB_ENCRYPTION_KEY:?set in .env}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set in .env}
+      JWT_MFA_SECRET: ${JWT_MFA_SECRET:?set in .env}
+      JWT_PASSWORD_RESET_SECRET: ${JWT_PASSWORD_RESET_SECRET:?set in .env}
+      PER_TRANSFER_CAP: ${PER_TRANSFER_CAP:-10000}
+      DAILY_TRANSFER_CAP: ${DAILY_TRANSFER_CAP:-25000}
+      HOURLY_TRANSFER_CAP_COUNT: ${HOURLY_TRANSFER_CAP_COUNT:-5}
+      MAX_FAILED_LOGIN_ATTEMPTS: ${MAX_FAILED_LOGIN_ATTEMPTS:-5}
+      LOGIN_LOCKOUT_MINUTES: ${LOGIN_LOCKOUT_MINUTES:-10}
+      SESSION_IDLE_TIMEOUT_MINUTES: ${SESSION_IDLE_TIMEOUT_MINUTES:-10}
+      SUSPICIOUS_ACTIVITY_LOOKBACK_MINUTES: ${SUSPICIOUS_ACTIVITY_LOOKBACK_MINUTES:-60}
+      SUSPICIOUS_ACTIVITY_MIN_RISK_SCORE: ${SUSPICIOUS_ACTIVITY_MIN_RISK_SCORE:-3}
+      OAUTH_GITHUB_ENABLED: ${OAUTH_GITHUB_ENABLED:-false}
+      OAUTH_GITHUB_CLIENT_ID: ${OAUTH_GITHUB_CLIENT_ID:-}
+      OAUTH_GITHUB_CLIENT_SECRET: ${OAUTH_GITHUB_CLIENT_SECRET:-}
+      OAUTH_GITHUB_CALLBACK_URL: ${OAUTH_GITHUB_CALLBACK_URL:-}
+      SEED_ADMIN_ENABLED: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile.prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    restart: unless-stopped
+
+volumes:
+  pgdata:

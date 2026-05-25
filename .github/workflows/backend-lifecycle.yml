@@ -1,0 +1,65 @@
+name: Backend Lifecycle Tests
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-lifecycle.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-lifecycle.yml"
+
+jobs:
+  lifecycle-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Start stack
+        env:
+          API_RATE_LIMIT_MAX: "10000"
+          AUTH_RATE_LIMIT_MAX: "10000"
+          DB_PREFLIGHT_ENABLED: "true"
+        run: docker compose -f docker-compose.yml up -d --build
+
+      - name: Wait for backend readiness
+        run: |
+          for i in {1..30}; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/api/auth/me || true)
+            if [ "$code" = "401" ]; then
+              echo "Backend is reachable through nginx."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not become ready in time."
+            docker compose -f docker-compose.yml logs backend --tail 120 || true
+          exit 1
+
+      - name: Run lifecycle suite
+          working-directory: backend
+        run: npm run test:lifecycle
+
+      - name: Dump logs on failure
+        if: failure()
+          run: docker compose -f docker-compose.yml logs --tail 200 || true
+
+      - name: Stop stack
+        if: always()
+          run: docker compose -f docker-compose.yml down -v

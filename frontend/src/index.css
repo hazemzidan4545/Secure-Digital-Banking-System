@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --panel-bg: rgba(255, 255, 255, 0.9);
+    --panel-border: rgba(59, 130, 246, 0.22);
+    --text-main: #0f172a;
+    --text-strong: #020617;
+    --muted: #475569;
+    --input-bg: #ffffff;
+    --input-border: #93c5fd;
+    --accent: #1d4ed8;
+    --accent-soft: rgba(29, 78, 216, 0.22);
+    --button-secondary: #dbeafe;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply m-0 min-h-screen antialiased;
+    font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #0f172a;
+    background:
+      radial-gradient(circle at 16% 18%, rgba(30, 64, 175, 0.34), transparent 38%),
+      radial-gradient(circle at 78% 14%, rgba(37, 99, 235, 0.3), transparent 36%),
+      radial-gradient(circle at 24% 74%, rgba(56, 189, 248, 0.24), transparent 40%),
+      radial-gradient(circle at 86% 70%, rgba(14, 116, 144, 0.24), transparent 40%),
+      radial-gradient(circle at 50% 44%, rgba(147, 197, 253, 0.24), transparent 45%),
+      linear-gradient(145deg, #eff6ff 0%, #dbeafe 42%, #e0f2fe 72%, #f0f9ff 100%);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Space Grotesk', 'Trebuchet MS', 'Lucida Sans Unicode', sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  input,
+  select,
+  textarea {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #93c5fd;
+    border-radius: 12px;
+    padding: 0.62rem 0.72rem;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #64748b;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    outline: none;
+  }
+
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background: #f1f5f9;
+    color: #64748b;
+    opacity: 1;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .banking-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .surface-card {
+    @apply rounded-2xl border border-blue-200/70 bg-white/90 shadow-soft backdrop-blur-sm;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+
+  .status-pill.success {
+    @apply bg-green-100 text-green-900;
+  }
+
+  .status-pill.warning {
+    @apply bg-amber-100 text-amber-900;
+  }
+
+  .status-pill.danger {
+    @apply bg-red-100 text-red-900;
+  }
+
+  .text-display {
+    @apply text-4xl font-bold leading-tight sm:text-5xl;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

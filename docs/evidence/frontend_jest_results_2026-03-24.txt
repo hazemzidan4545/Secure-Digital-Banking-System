@@ -1,0 +1,13 @@
+Frontend Jest test execution log
+Date: March 24, 2026
+Command: cd frontend && npm test -- --runInBand
+
+PASS  src/__tests__/api.test.js
+PASS  src/pages/__tests__/AuthPages.test.jsx
+PASS  src/components/__tests__/RouteGuards.test.jsx
+
+Test Suites: 3 passed, 3 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        1.452 s
+Ran all test suites.

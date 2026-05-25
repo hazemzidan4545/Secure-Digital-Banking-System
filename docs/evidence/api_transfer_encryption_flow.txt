@@ -1,0 +1,5 @@
+sender=enc.a.1774136796@test.local
+recipient=enc.b.1774136796@test.local
+recipientAccount=AC413679667130
+otpUsed=114522
+transferMessage=Transfer simulated successfully.

@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: secure_bank
+      POSTGRES_USER: bank_user
+      POSTGRES_PASSWORD: bank_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      PORT: 4000
+      NODE_ENV: development
+      FRONTEND_ORIGIN: http://localhost:8081
+      DATABASE_URL: postgresql://bank_user:bank_password@db:5432/secure_bank
+      DB_ENCRYPTION_KEY: dev_db_encryption_key_change_me
+      JWT_ACCESS_SECRET: dev_access_secret_change_me
+      JWT_MFA_SECRET: dev_mfa_secret_change_me
+      JWT_PASSWORD_RESET_SECRET: dev_reset_secret_change_me
+      PER_TRANSFER_CAP: 10000
+      DAILY_TRANSFER_CAP: 25000
+      HOURLY_TRANSFER_CAP_COUNT: 5
+      MAX_FAILED_LOGIN_ATTEMPTS: 5
+      LOGIN_LOCKOUT_MINUTES: 10
+      SESSION_IDLE_TIMEOUT_MINUTES: 10
+      SUSPICIOUS_ACTIVITY_LOOKBACK_MINUTES: 60
+      SUSPICIOUS_ACTIVITY_MIN_RISK_SCORE: 3
+      API_RATE_LIMIT_WINDOW_MS: ${API_RATE_LIMIT_WINDOW_MS:-900000}
+      API_RATE_LIMIT_MAX: ${API_RATE_LIMIT_MAX:-200}
+      AUTH_RATE_LIMIT_WINDOW_MS: ${AUTH_RATE_LIMIT_WINDOW_MS:-900000}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-25}
+      DB_PREFLIGHT_ENABLED: ${DB_PREFLIGHT_ENABLED:-true}
+      OAUTH_GITHUB_ENABLED: ${OAUTH_GITHUB_ENABLED:-true}
+      OAUTH_GITHUB_CLIENT_ID: ${OAUTH_GITHUB_CLIENT_ID:-}
+      OAUTH_GITHUB_CLIENT_SECRET: ${OAUTH_GITHUB_CLIENT_SECRET:-}
+      OAUTH_GITHUB_CALLBACK_URL: ${OAUTH_GITHUB_CALLBACK_URL:-http://localhost:8081/api/auth/oauth/github/callback}
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: no-reply@aegisbank.local
+      SEED_ADMIN_ENABLED: "true"
+      SEED_ADMIN_NAME: System Admin
+      SEED_ADMIN_EMAIL: admin@aegisbank.local
+      SEED_ADMIN_PASSWORD: AdminPass123!
+    depends_on:
+      - db
+      - mailhog
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "8025:8025"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  pgdata:
